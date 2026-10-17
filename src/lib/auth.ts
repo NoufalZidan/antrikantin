@@ -2,7 +2,7 @@ export type Role = 'mahasiswa' | 'penjual'
 
 // Halaman beranda setelah login, sesuai role
 export function homeFor(role: Role): string {
-  return role === 'penjual' ? '/dashboard' : '/kantin'
+  return role === 'penjual' ? '/penjual' : '/'
 }
 
 // Terjemahkan pesan error Supabase Auth ke Bahasa Indonesia
