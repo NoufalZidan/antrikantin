@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MenuCard, { MenuItem } from './menucard';
+import { createClient } from '@/lib/supabase/client';
 
 export interface OrderItem extends MenuItem {
   quantity: number;
   variant?: string;
 }
+
+const supabase = createClient();
 
 const dummyMenus: MenuItem[] = [
   { 
@@ -99,8 +102,56 @@ export default function HomePage() {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [showCartDetail, setShowCartDetail] = useState(false);
   const [activeOptionMenu, setActiveOptionMenu] = useState<MenuItem | null>(null);
+  const [menus, setMenus] = useState<MenuItem[]>(dummyMenus);
+  const [userName, setUserName] = useState('Guest');
+  const [userRole, setUserRole] = useState('');
 
-  const filteredMenus = dummyMenus.filter((menu) => {
+  // Fetch user profile dan menus dari database
+  useEffect(() => {
+    const fetchData = async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Fetch profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nama, role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setUserName(profile.nama || user.email?.split('@')[0] || 'Pengguna');
+          setUserRole(profile.role === 'penjual' ? 'Penjual' : 'Mahasiswa');
+        }
+      }
+
+      // Fetch menus dari database
+      const { data: dbMenus } = await supabase
+        .from('menus')
+        .select('id, nama, deskripsi, harga, status, kategori, penjual_id, foto_url')
+        .eq('status', 'aktif');
+      
+      if (dbMenus && dbMenus.length > 0) {
+        // Map database schema ke MenuItem interface
+        const mappedMenus: MenuItem[] = dbMenus.map((m: any) => ({
+          id: m.id,
+          name: m.nama,
+          description: m.deskripsi,
+          price: m.harga,
+          status: m.status === 'habis' ? 'HABIS' : 'TERSEDIA',
+          category: m.kategori?.toUpperCase() || 'LAINNYA',
+          sellerName: 'Kantin',
+          image: m.foto_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop'
+        }));
+        setMenus(mappedMenus);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredMenus = menus.filter((menu) => {
     const categoryMatch =
       selectedCategory === 'Semua' ||
       menu.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -155,7 +206,7 @@ export default function HomePage() {
           <div className="text-2xl font-bold text-emerald-600">J'S</div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:block px-4 py-2 rounded-full bg-gray-100 text-sm text-gray-700 font-medium">
-              Administrator Kantin (admin)
+              {userName} {userRole && `(${userRole.toLowerCase()})`}
             </div>
             <button className="text-gray-700 hover:text-gray-900 font-medium text-sm">
               Keluar
@@ -166,9 +217,9 @@ export default function HomePage() {
 
       {/* Hero */}
       <div className="bg-gradient-to-br from-emerald-600 to-emerald-500 text-white pt-10 pb-20 px-4 text-center relative">
-        <h1 className="text-3xl font-bold mb-2">Kelola Menu Kantin</h1>
+        <h1 className="text-3xl font-bold mb-2">Pesan Menu Kantin</h1>
         <p className="text-emerald-100 text-sm">
-          Kelola dan pantau semua menu yang tersedia.
+          Jelajahi menu pilihan dan pesan dengan mudah dari kantin kami.
         </p>
         <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 w-full max-w-xl px-4">
           <div className="bg-white rounded-2xl p-1.5 shadow-lg flex items-center gap-2">
@@ -298,61 +349,25 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Floating Cart Bar */}
+      {/* Overlay untuk Cart Detail */}
+      <div
+        className={`fixed inset-0 bg-black/20 z-40 transition-opacity duration-500 ${
+          showCartDetail ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setShowCartDetail(false)}
+      />
+
+      {/* Cart Detail Sheet - Slide Up dengan animasi */}
       {totalItems > 0 && (
-        <div
-          className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ${
-            showCartDetail ? 'h-[60vh]' : 'h-20'
+        <div 
+          className={`fixed bottom-28 left-4 right-4 z-50 max-h-[calc(100vh-8rem)] transition-all duration-500 ease-out ${
+            showCartDetail 
+              ? 'translate-y-0 opacity-100' 
+              : 'translate-y-full opacity-0 pointer-events-none'
           }`}
         >
-          {showCartDetail && (
-            <div
-              className="fixed inset-0 bg-black/20 -z-10"
-              onClick={() => setShowCartDetail(false)}
-            />
-          )}
-
-          <div className="bg-white border-t border-emerald-100 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] h-full flex flex-col rounded-t-3xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
-              <button
-                onClick={() => setShowCartDetail(!showCartDetail)}
-                className="flex items-center gap-3"
-              >
-                <div
-                  className={`transition-transform duration-300 ${
-                    showCartDetail ? 'rotate-180' : ''
-                  }`}
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-emerald-600"
-                  >
-                    <polyline points="18 15 12 9 6 15"></polyline>
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-                    {totalItems} Item
-                  </p>
-                  <p className="font-extrabold text-emerald-600 text-lg">
-                    Rp {totalPrice.toLocaleString('id-ID')}
-                  </p>
-                </div>
-              </button>
-
-              <button className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-600/20 active:scale-95">
-                Checkout
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-gray-50">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.15)] h-full flex flex-col">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
               {cart.map((item, idx) => (
                 <div
                   key={`${item.id}-${item.variant}-${idx}`}
@@ -417,6 +432,50 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Cart Bar - Melayang */}
+      {totalItems > 0 && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 h-20 bg-white rounded-2xl border border-emerald-100 shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
+          <div className="flex items-center justify-between px-6 py-4 h-full">
+            <button
+              onClick={() => setShowCartDetail(!showCartDetail)}
+              className="flex items-center gap-3"
+            >
+              <div
+                className={`transition-transform duration-500 ${
+                  showCartDetail ? 'rotate-180' : ''
+                }`}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-emerald-600"
+                >
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                  {totalItems} Item
+                </p>
+                <p className="font-extrabold text-emerald-600 text-lg">
+                  Rp {totalPrice.toLocaleString('id-ID')}
+                </p>
+              </div>
+            </button>
+
+            <button className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-600/20 active:scale-95">
+              Checkout
+            </button>
           </div>
         </div>
       )}
