@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Nama tim: Ompreng Genk Josjis
 
-## Getting Started
+Aanggota:
+Muhammad Rafly Abimanyu (Ketua) – H1D025010
+Idham Khalid Munawar – H1D025018
+Radithya Agung Anugrah – H1D025024
+Dede Hidayatul ‘Aziz – H1D025036
+Noufal Zidan Ivannov – H1D025065
 
-First, run the development server:
+Deskripsi permasalahan:
+Di lingkungan kampus, waktu istirahat (ISHOMA) sangat terbatas, sementara kantin dipadati banyak mahasiswa pada saat yang bersamaan. Pemesanan masih dilakukan secara langsung dan manual, sehingga muncul beberapa masalah:
+Antrean panjang. Mahasiswa harus mengantre fisik untuk memesan, sehingga sebagian besar waktu istirahat habis hanya untuk menunggu giliran.
+Waktu istirahat tidak efektif. Mahasiswa terlambat masuk kelas berikutnya, atau terpaksa melewatkan makan dan ibadah karena waktu habis di antrean.
+Beban penjual menumpuk. Pesanan datang serentak dan dicatat secara manual, sehingga rawan salah catat, pesanan tertukar, dan dapur kewalahan pada jam sibuk.
+Tidak ada kepastian. Mahasiswa tidak tahu berapa lama pesanannya akan jadi, dan penjual tidak punya gambaran jumlah pesanan yang akan masuk.
+Masalah ini dialami hampir setiap hari oleh mahasiswa dan penjual kantin, sehingga termasuk permasalahan sehari-hari yang nyata di lingkungan sekitar kami. 
+Akar masalahnya bukan semata kantin yang ramai, melainkan ketidakseimbangan antara lonjakan permintaan dan kapasitas layanan. Seluruh mahasiswa membutuhkan makan siang pada jendela waktu yang sama, sementara kantin hanya dilayani oleh sejumlah kecil karyawan. Akibatnya, waktu istirahat yang seharusnya digunakan untuk makan, beribadah, dan memulihkan fokus justru habis di antrean. Ini bukan sekadar ketidaknyamanan, melainkan kerugian waktu produktif yang berulang setiap hari bagi ratusan mahasiswa. 
 
-```bash
+Solusi yang dikembangkan:
+AntriKantin adalah aplikasi web berbasis browser (responsif untuk ponsel) yang memindahkan proses antre dari kantin ke aplikasi. Alur penggunaannya:
+1. Mahasiswa membuka AntriKantin dari ponsel, memilih kantin dan menu, lalu melakukan pembayaran.
+2. Pesanan masuk ke dashboard penjual secara real-time, lalu penjual memperbarui statusnya: Diterima, Diproses, Siap Diambil.
+3. Mahasiswa menerima notifikasi status di aplikasi. Saat tiba di kantin, mahasiswa cukup menunjukkan kode pesanan dan mengambil makanannya.
+Dengan cara ini, mahasiswa memesan dari kelas sebelum istirahat dimulai, sedangkan penjual mendapat gambaran beban kerja yang lebih teratur. Pembayaran pada tahap awal dilakukan di tempat saat pengambilan, dengan simulasi pembayaran QRIS pada prototipe sebagai gambaran 
+
+Teknologi yang digunakan:
+Frontend: React / Next.js + Tailwind CSS (responsif)
+Backend & DB: Supabase: PostgreSQL, autentikasi, Realtime
+Notifikasi: Supabase Realtime
+Pembayaran: Simulasi QRIS (mock), tanpa payment gateway
+Deployment: Vercel
+Kolaborasi: GitHub, AI assistant sebagai alat bantu
+
+Petunjuk installasi (jika ingin menjalankan secara lokal):
+git clone https://github.com/your-team/antrikantin.git
+cd antrikantin
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cara penggunaan aplikasi:
+Buka laman https://antrikantin.vercel.app/
+Login sebagai pembeli/penjual
+Jika menjadi pembeli anda dapat langsung memilih kantin
+Klik salah satu kantin maka anda akan diarahkan ke dalam menu pada kantin tersebut
+Anda dapat langsung menambahkan item yang diinginkan
+Klik "Checkout" maka anda akan langsung diarahkan ke halaman pembayaran
+Selesaikan pembayaran dan kirim bukti pembayaran
+Makanan akan segera diproses oleh penjual, anda dapat cek status pesanan pada halaman Lacak pesanan
+Jika login sebagai penjual anda dapat melakukan kustomisasi barang yang dijual
+Pada tampilan awal anda dapat melihat pesanan yang baru diterima, sedang diproses, dan siap diambil
+Pesanan akan otomatis muncul dan anda dapat secara manual mengupdate status pesanan
