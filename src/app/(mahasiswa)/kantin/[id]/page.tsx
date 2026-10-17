@@ -324,7 +324,20 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
                 <p className="font-extrabold text-emerald-600 text-lg">Rp {totalPrice.toLocaleString('id-ID')}</p>
               </div>
             </button>
-            <button className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-600/20 active:scale-95">Checkout</button>
+            <button 
+              onClick={() => {
+                // Simpan data checkout ke localStorage
+                localStorage.setItem('checkout_data', JSON.stringify({
+                  cart,
+                  canteenName,
+                  canteenId
+                }));
+                router.push('/checkout');
+              }}
+              className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-600/20 active:scale-95"
+            >
+              Checkout
+            </button>
           </div>
         </div>
       )}
