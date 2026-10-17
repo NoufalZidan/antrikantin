@@ -1,0 +1,298 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface OrderItem {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  status: 'TERSEDIA' | 'HABIS';
+  category: string;
+  sellerName: string;
+  image: string;
+  quantity: number;
+  variant?: string;
+}
+
+interface CheckoutData {
+  cart: OrderItem[];
+  canteenName: string;
+  canteenId: string;
+}
+
+type PaymentMethod = 'QRIS' | 'BANK_TRANSFER' | 'GOPAY' | 'DANA' | 'OVO' | 'CASH';
+
+export default function CheckoutPage() {
+  const router = useRouter();
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    // Ambil data dari localStorage
+    const stored = localStorage.getItem('checkout_data');
+    if (stored) {
+      const data = JSON.parse(stored);
+      setCheckoutData(data);
+    } else {
+      // Kalau gak ada data, redirect ke halaman utama
+      router.push('/');
+    }
+  }, [router]);
+
+  if (!checkoutData) {
+    return (
+      <div className="min-h-screen bg-emerald-50/30 flex items-center justify-center">
+        <p className="text-gray-500">Memuat data checkout...</p>
+      </div>
+    );
+  }
+
+  const { cart, canteenName } = checkoutData;
+  const totalItems = cart.reduce((acc, curr) => acc + curr.quantity, 0);
+  const subtotal = cart.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
+  const serviceFee = 0;
+  const total = subtotal + serviceFee;
+
+  const paymentMethods = [
+    {
+      id: 'QRIS' as PaymentMethod,
+      name: 'QRIS',
+      description: 'Scan QR dengan aplikasi e-wallet',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      ),
+    },
+    {
+      id: 'BANK_TRANSFER' as PaymentMethod,
+      name: 'Transfer Bank',
+      description: 'BCA, BNI, Mandiri, BRI',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'GOPAY' as PaymentMethod,
+      name: 'GoPay',
+      description: 'Bayar langsung via GoPay',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'DANA' as PaymentMethod,
+      name: 'DANA',
+      description: 'Bayar langsung via DANA',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'OVO' as PaymentMethod,
+      name: 'OVO',
+      description: 'Bayar langsung via OVO',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'CASH' as PaymentMethod,
+      name: 'Tunai',
+      description: 'Bayar di tempat saat ambil pesanan',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+      ),
+    },
+  ];
+
+  const handlePayment = () => {
+    if (!selectedPayment) {
+      alert('Pilih metode pembayaran terlebih dahulu');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Simulasi proses pembayaran
+    setTimeout(() => {
+      alert(`Pembayaran via ${paymentMethods.find(p => p.id === selectedPayment)?.name} berhasil!\n\nTotal: Rp ${total.toLocaleString('id-ID')}\n\nPesanan sedang diproses oleh ${canteenName}.`);
+      localStorage.removeItem('checkout_data');
+      setIsProcessing(false);
+      router.push('/');
+    }, 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-emerald-50/30 pb-32">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+          <button
+            onClick={() => {
+              if (confirm('Batalkan checkout dan kembali ke halaman kantin?')) {
+                router.back();
+              }
+            }}
+            className="text-gray-500 hover:text-emerald-600 font-bold flex items-center gap-2"
+          >
+            <span>&larr;</span> Kembali
+          </button>
+          <div className="text-xl font-bold text-emerald-600">Checkout</div>
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        {/* Info Kantin */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-2">Pesanan dari</h2>
+          <p className="text-emerald-600 font-bold text-xl">{canteenName}</p>
+        </div>
+
+        {/* Daftar Pesanan */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Ringkasan Pesanan</h2>
+          <div className="space-y-4">
+            {cart.map((item, idx) => (
+              <div
+                key={`${item.id}-${item.variant}-${idx}`}
+                className="flex items-center gap-4 pb-4 border-b border-gray-50 last:border-0"
+              >
+                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                    {item.variant && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                        {item.variant}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-gray-800 text-base truncate">
+                    {item.name}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Rp {item.price.toLocaleString('id-ID')} x {item.quantity}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="font-bold text-emerald-600 text-lg">
+                    Rp {(item.price * item.quantity).toLocaleString('id-ID')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Subtotal */}
+          <div className="mt-6 pt-4 border-t border-gray-100 space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Subtotal ({totalItems} item)</span>
+              <span className="font-semibold text-gray-700">
+                Rp {subtotal.toLocaleString('id-ID')}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Biaya Layanan</span>
+              <span className="font-semibold text-gray-700">
+                {serviceFee === 0 ? 'Gratis' : `Rp ${serviceFee.toLocaleString('id-ID')}`}
+              </span>
+            </div>
+            <div className="flex justify-between text-lg pt-3 border-t border-gray-100">
+              <span className="font-bold text-gray-800">Total Pembayaran</span>
+              <span className="font-extrabold text-emerald-600">
+                Rp {total.toLocaleString('id-ID')}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Metode Pembayaran */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Metode Pembayaran</h2>
+          <div className="space-y-3">
+            {paymentMethods.map((method) => (
+              <button
+                key={method.id}
+                onClick={() => setSelectedPayment(method.id)}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                  selectedPayment === method.id
+                    ? 'border-emerald-500 bg-emerald-50'
+                    : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                    {method.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-800 text-base">{method.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{method.description}</p>
+                  </div>
+                  {selectedPayment === method.id && (
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tombol Bayar */}
+        <button
+          onClick={handlePayment}
+          disabled={!selectedPayment || isProcessing}
+          className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+            !selectedPayment || isProcessing
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98] shadow-emerald-600/20'
+          }`}
+        >
+          {isProcessing ? 'Memproses...' : `Bayar Rp ${total.toLocaleString('id-ID')}`}
+        </button>
+      </div>
+    </div>
+  );
+}
