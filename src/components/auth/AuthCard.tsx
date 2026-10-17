@@ -16,12 +16,13 @@ export function AuthCard({ title, subtitle, wide = false, children }: Props) {
       }`}
     >
       <div className="mb-8 flex flex-col items-center">
-        <Link href="/" className="mb-4 flex items-center gap-2.5">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-700 text-xl font-semibold text-white">
-            A
-          </span>
-          <span className="text-xl font-semibold tracking-tight text-stone-900">AntriKantin</span>
-        </Link>
+        <div className="mb-4 flex items-center">
+          <img
+            src="/logo.png"
+            alt="JOiS"
+            className="h-20 w-auto object-contain"
+          />
+        </div>
         <h1 className="text-2xl font-bold text-stone-800">{title}</h1>
         <p className="mt-1 text-center text-sm text-stone-500">{subtitle}</p>
       </div>

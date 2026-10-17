@@ -149,6 +149,7 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
           >
             <FaArrowLeft className="text-xl" />
           </button>
+          <img src="/logo.png" alt="JOiS" className="h-8 w-auto object-contain" />
           <div className="text-xl font-bold text-emerald-600">{canteenName}</div>
         </div>
       </header>
