@@ -6,6 +6,7 @@ import {
   BellOff,
   CheckCircle,
   Clock,
+  Feather,
   Inbox,
   RefreshCw,
   ShoppingBag,
@@ -41,24 +42,15 @@ type NewOrder = {
   kode_pesanan: string;
   total: number;
   metode_bayar: string;
+  canteen_id: string;
 };
 
 type Toast = { id: string; code: string; text: string };
 
-// Pemetaan transisi status persis sesuai enum database: 'diterima', 'diproses', 'siap', 'selesai'
 const NEXT: Record<string, { status: string; label: string }> = {
-  diterima: {
-    status: "diproses",
-    label: "Proses Pesanan",
-  },
-  diproses: {
-    status: "siap",
-    label: "Tandai Siap Diambil",
-  },
-  siap: {
-    status: "selesai",
-    label: "Selesaikan Pesanan",
-  },
+  diterima: { status: "diproses", label: "Proses Pesanan" },
+  diproses: { status: "siap", label: "Tandai Siap Diambil" },
+  siap: { status: "selesai", label: "Selesaikan Pesanan" },
 };
 
 const STYLE: Record<string, { badge: string; dot: string }> = {
@@ -94,6 +86,7 @@ const jam = (t: string) => (t ? t.slice(0, 5) : "");
 export default function PenjualDashboard() {
   const [pesanan, setPesanan] = useState<Pesanan[]>([]);
   const [seller, setSeller] = useState<boolean | null>(null);
+  const [canteenId, setCanteenId] = useState<string | null>(null); // Tambahan state ID Kantin
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [err, setErr] = useState("");
@@ -130,7 +123,8 @@ export default function PenjualDashboard() {
     [beep],
   );
 
-  const loadOrders = useCallback(async () => {
+  // Membutuhkan ID Kantin untuk mengambil order yang relevan saja
+  const loadOrders = useCallback(async (cid: string) => {
     setLoading(true);
     const { data, error } = await sb
       .from("orders")
@@ -155,6 +149,7 @@ export default function PenjualDashboard() {
         )
       `,
       )
+      .eq("canteen_id", cid) // Filter hanya pesanan di kantin ini
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -180,13 +175,33 @@ export default function PenjualDashboard() {
         setLoading(false);
         return;
       }
+
       const { data: profile } = await sb
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .single();
       if (!active) return;
-      setSeller(profile?.role === "penjual");
+
+      if (profile?.role === "penjual") {
+        // Ambil data kantin yang terhubung dengan akun penjual
+        const { data: canteen } = await sb
+          .from("canteens")
+          .select("id")
+          .eq("owner_id", user.id)
+          .single();
+        if (canteen) {
+          setCanteenId(canteen.id);
+          setSeller(true);
+        } else {
+          setErr("Kantin tidak ditemukan untuk akun ini.");
+          setSeller(false);
+          setLoading(false);
+        }
+      } else {
+        setSeller(false);
+        setLoading(false);
+      }
     };
     void checkSeller();
     return () => {
@@ -195,15 +210,21 @@ export default function PenjualDashboard() {
   }, []);
 
   useEffect(() => {
-    if (seller !== true) return;
-    void loadOrders();
+    if (seller !== true || !canteenId) return;
+    void loadOrders(canteenId);
 
-    const reload = () => void loadOrders();
+    const reload = () => void loadOrders(canteenId);
     const channel = sb
       .channel("seller-orders")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "orders" },
+        // Filter realtime event hanya untuk pesanan baru di kantin ini
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `canteen_id=eq.${canteenId}`,
+        },
         (p) => {
           notifyNew(p.new as NewOrder);
           setTimeout(reload, 1500);
@@ -211,20 +232,25 @@ export default function PenjualDashboard() {
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `canteen_id=eq.${canteenId}`,
+        },
         reload,
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "order_items" },
         reload,
-      )
+      ) // Jika item berubah, update
       .subscribe();
 
     return () => {
       void sb.removeChannel(channel);
     };
-  }, [seller, loadOrders, notifyNew]);
+  }, [seller, canteenId, loadOrders, notifyNew]);
 
   const updateStatus = async (order: Pesanan) => {
     const currentStatus = (order.status || "").toLowerCase().trim();
@@ -237,7 +263,7 @@ export default function PenjualDashboard() {
       return;
     }
 
-    if (busyId !== null) return;
+    if (busyId !== null || !canteenId) return;
 
     setBusyId(order.id);
     setErr("");
@@ -256,7 +282,7 @@ export default function PenjualDashboard() {
         n.delete(order.id);
         return n;
       });
-      await loadOrders();
+      await loadOrders(canteenId);
     }
     setBusyId(null);
   };
@@ -268,7 +294,7 @@ export default function PenjualDashboard() {
   if (!seller)
     return (
       <div className="p-8 text-center text-red-500">
-        Akses ditolak. Khusus akun Penjual.
+        Akses ditolak. {err || "Khusus akun Penjual."}
       </div>
     );
 
@@ -313,7 +339,11 @@ export default function PenjualDashboard() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="JOiS" className="h-8 w-auto object-contain" />
+              <img
+                src="/logo.png"
+                alt="JOiS"
+                className="h-8 w-auto object-contain"
+              />
             </div>
             <div>
               <h1 className="font-bold text-gray-800 text-lg">
@@ -325,6 +355,12 @@ export default function PenjualDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href="/penjual/profil"
+              className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors hidden sm:block"
+            >
+              Profil Kantin
+            </a>
             <a
               href="/penjual/menu"
               className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors"
@@ -357,7 +393,7 @@ export default function PenjualDashboard() {
             </p>
           </div>
           <button
-            onClick={() => void loadOrders()}
+            onClick={() => canteenId && loadOrders(canteenId)}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 self-start sm:self-auto"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />{" "}
@@ -520,7 +556,7 @@ export default function PenjualDashboard() {
                       </button>
                     ) : (
                       <div className="w-full py-3 text-center text-xs font-bold text-gray-400 bg-gray-100 rounded-2xl">
-                        Pesanan Selesai
+                        Pesanan Selesai / Dibatalkan
                       </div>
                     )}
                   </div>

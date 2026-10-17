@@ -16,10 +16,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Ambil data user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
         const { data: profile } = await supabase
@@ -34,8 +31,7 @@ export default function HomePage() {
         }
       }
 
-      // Ambil daftar kantin beserta gambar_url
-      const { data: dbCanteens, error } = await supabase
+      const { data: dbCanteens } = await supabase
         .from("canteens")
         .select("id, nama, lokasi, gambar_url");
 
@@ -60,31 +56,32 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-emerald-50/30 pb-32">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <img src="/logo.png" alt="JOiS" className="h-9 w-auto object-contain" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={handleLogout}
-              className="text-gray-700 hover:text-red-600 font-medium text-sm transition-colors"
+              onClick={() => router.push("/profil")}
+              className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors hidden sm:block"
             >
-              Keluar
+              Profil
             </button>
-            <div className="hidden sm:block px-4 py-2 rounded-full bg-gray-100 text-sm text-gray-700 font-medium">
-              {userName} {userRole && `(${userRole.toLowerCase()})`}
-            </div>
             <button
               onClick={() => router.push("/pesanan")}
               className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors"
             >
               Lacak Pesanan
             </button>
+            <button
+              onClick={handleLogout}
+              className="text-gray-700 hover:text-red-600 font-medium text-sm transition-colors ml-2"
+            >
+              Keluar
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
       <div className="bg-gradient-to-br from-emerald-600 to-emerald-500 text-white pt-10 pb-20 px-4 text-center relative">
         <h1 className="text-3xl font-bold mb-2">Pilih Kantin</h1>
         <p className="text-emerald-100 text-sm">
@@ -92,7 +89,6 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Daftar Kantin */}
       <div className="max-w-7xl mx-auto px-6 pt-10">
         <h2 className="text-xl font-bold text-gray-800 mb-6">
           Kantin Tersedia
@@ -107,8 +103,6 @@ export default function HomePage() {
             {canteens.map((canteen) => (
               <Link key={canteen.id} href={`/kantin/${canteen.id}`}>
                 <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group flex flex-col">
-                  
-                  {/* Bagian Gambar (Memenuhi Setengah Card / Tinggi 36) */}
                   <div className="w-full h-36 bg-emerald-100 relative overflow-hidden">
                     {canteen.gambar_url ? (
                       <img
@@ -122,8 +116,6 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
-
-                  {/* Bagian Teks di Bawah */}
                   <div className="p-5 flex flex-col justify-between flex-1">
                     <h3 className="text-lg font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
                       {canteen.nama}
@@ -132,7 +124,6 @@ export default function HomePage() {
                       {canteen.lokasi}
                     </p>
                   </div>
-
                 </div>
               </Link>
             ))}
