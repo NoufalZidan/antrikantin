@@ -79,7 +79,7 @@ export default function RegisterPage() {
     <AuthCard
       wide
       title="Buat Akun Baru"
-      subtitle="Bergabunglah untuk memesan tanpa antre di AntriKantin"
+      subtitle="Bergabunglah untuk memesan tanpa antre di JOiS"
     >
       {error && (
         <div

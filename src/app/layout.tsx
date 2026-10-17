@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AntriKantin",
+  title: "JOiS",
   description: "Solusi untuk mengatasi antrean rame di kantin",
 };
 

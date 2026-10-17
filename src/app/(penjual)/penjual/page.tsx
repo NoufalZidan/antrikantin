@@ -6,7 +6,6 @@ import {
   BellOff,
   CheckCircle,
   Clock,
-  Feather,
   Inbox,
   RefreshCw,
   ShoppingBag,
@@ -313,8 +312,8 @@ export default function PenjualDashboard() {
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
-              <Feather size={20} />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="JOiS" className="h-8 w-auto object-contain" />
             </div>
             <div>
               <h1 className="font-bold text-gray-800 text-lg">

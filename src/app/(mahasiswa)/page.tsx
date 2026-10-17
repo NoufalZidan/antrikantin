@@ -63,7 +63,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold text-emerald-600">AntriKantin</div>
+          <img src="/logo.png" alt="JOiS" className="h-9 w-auto object-contain" />
           <div className="flex items-center gap-3">
             <button
               onClick={handleLogout}
