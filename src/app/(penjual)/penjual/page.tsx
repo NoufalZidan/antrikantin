@@ -8,7 +8,7 @@ import {
   CheckCircle,
   Clock,
   CreditCard,
-  Feather,
+  Feather,  
   Inbox,
   Loader,
   RefreshCw,
@@ -204,7 +204,7 @@ export default function PenjualDashboard() {
           jam_selesai
         )
       `)
-      .neq('status', 'Selesai')
+      
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -449,6 +449,13 @@ export default function PenjualDashboard() {
               {loading ? '—' : pesanan.length}
             </span>
           </div>
+          <a
+  href="/penjual/menu"
+  className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-green-100 transition hover:bg-white/10"
+>
+  <ShoppingBag size={16} aria-hidden="true" />
+  Kelola Menu
+</a>
         </nav>
 
         <div className="relative mt-auto hidden px-5 py-5 lg:block">
