@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import MenuCard, { MenuItem } from '../../menucard'; 
+import { FaArrowLeft } from 'react-icons/fa6';
 
 export interface OrderItem extends MenuItem {
   quantity: number;
@@ -16,33 +17,56 @@ const categories = ['Semua', 'Makanan', 'Minuman', 'Camilan', 'Dessert', 'Lainny
 export default function KantinDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
 
-  // State untuk menyimpan ID kantin
   const [canteenId, setCanteenId] = useState<string>('');
-
   const [canteenName, setCanteenName] = useState('Memuat...');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // State cart diinisialisasi dari localStorage berdasarkan canteenId agar terisolasi & persisten
   const [cart, setCart] = useState<OrderItem[]>([]);
+  
   const [showCartDetail, setShowCartDetail] = useState(false);
   const [activeOptionMenu, setActiveOptionMenu] = useState<MenuItem | null>(null);
   const [menus, setMenus] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Ekstrak params secara asynchronous agar tidak memblokir prerendering Next.js
+  // 1. Ekstrak params
   useEffect(() => {
     params.then((resolvedParams) => {
       setCanteenId(resolvedParams.id);
     });
   }, [params]);
 
-  // 2. Ambil data kantin dan menu setelah canteenId tersedia
+  // 2. Ambil cart dari localStorage begitu canteenId didapat
+  useEffect(() => {
+    if (!canteenId) return;
+    const savedCart = localStorage.getItem(`cart_${canteenId}`);
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Gagal parsing cart:", e);
+      }
+    }
+  }, [canteenId]);
+
+  // 3. Simpan cart ke localStorage setiap kali ada perubahan
+  useEffect(() => {
+    if (!canteenId) return;
+    if (cart.length > 0) {
+      localStorage.setItem(`cart_${canteenId}`, JSON.stringify(cart));
+    } else {
+      localStorage.removeItem(`cart_${canteenId}`);
+    }
+  }, [cart, canteenId]);
+
+  // 4. Ambil data kantin dan menu
   useEffect(() => {
     if (!canteenId) return;
 
     const fetchCanteenAndMenus = async () => {
       setIsLoading(true);
       
-      // Ambil nama kantin dari tabel canteens
       const { data: canteen } = await supabase
         .from('canteens')
         .select('nama')
@@ -51,7 +75,6 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
         
       if (canteen) setCanteenName(canteen.nama);
 
-      // Ambil menu spesifik untuk kantin ini
       const { data: dbMenus } = await supabase
         .from('menus')
         .select('id, nama, deskripsi, harga, tersedia, gambar_url')
@@ -64,7 +87,7 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
           description: m.deskripsi,
           price: m.harga,
           status: m.tersedia ? 'TERSEDIA' : 'HABIS',
-          category: 'LAINNYA', // Update ini jika kamu menambah kolom kategori di DB nanti
+          category: 'LAINNYA',
           sellerName: canteen?.nama || 'Kantin',
           image: m.gambar_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop'
         }));
@@ -114,16 +137,17 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
           <button 
             onClick={() => {
               if (cart.length > 0) {
-                 if(confirm('Keranjangmu di kantin ini akan dihapus jika kamu kembali. Lanjutkan?')) {
+                 if(confirm('Keranjangmu di kantin ini akan disimpan. Lanjutkan kembali ke beranda?')) {
                      router.push('/');
                  }
               } else {
                  router.push('/');
               }
             }} 
-            className="text-gray-500 hover:text-emerald-600 font-bold flex items-center gap-2"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+            aria-label="Kembali"
           >
-            <span>&larr;</span> Kembali
+            <FaArrowLeft className="text-xl" />
           </button>
           <div className="text-xl font-bold text-emerald-600">{canteenName}</div>
         </div>
@@ -271,7 +295,7 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
         onClick={() => setShowCartDetail(false)}
       />
 
-      {/* Cart Detail Sheet - Slide Up dengan animasi */}
+      {/* Cart Detail Sheet */}
       {totalItems > 0 && (
         <div 
           className={`fixed bottom-28 left-4 right-4 z-50 max-h-[calc(100vh-8rem)] transition-all duration-500 ease-out ${
@@ -311,7 +335,7 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      {/* Floating Cart Bar - Melayang */}
+      {/* Floating Cart Bar */}
       {totalItems > 0 && (
         <div className="fixed bottom-4 left-4 right-4 z-50 h-20 bg-white rounded-2xl border border-emerald-100 shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
           <div className="flex items-center justify-between px-6 py-4 h-full">
@@ -326,7 +350,6 @@ export default function KantinDetailPage({ params }: { params: Promise<{ id: str
             </button>
             <button 
               onClick={() => {
-                // Simpan data checkout ke localStorage
                 localStorage.setItem('checkout_data', JSON.stringify({
                   cart,
                   canteenName,

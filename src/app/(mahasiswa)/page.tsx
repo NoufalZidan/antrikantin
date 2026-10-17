@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 
 export default function HomePage() {
+  const router = useRouter();
   const [canteens, setCanteens] = useState<any[]>([]);
   const [userName, setUserName] = useState("Guest");
   const [userRole, setUserRole] = useState("");
@@ -14,10 +16,11 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Ambil data user
+      // Ambil data user
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
@@ -31,10 +34,10 @@ export default function HomePage() {
         }
       }
 
-      // 2. Ambil daftar kantin
+      // Ambil daftar kantin beserta gambar_url
       const { data: dbCanteens, error } = await supabase
         .from("canteens")
-        .select("id, nama, lokasi");
+        .select("id, nama, lokasi, gambar_url");
 
       if (dbCanteens) {
         setCanteens(dbCanteens);
@@ -45,6 +48,16 @@ export default function HomePage() {
     fetchData();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Gagal melakukan logout:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-emerald-50/30 pb-32">
       {/* Header */}
@@ -52,11 +65,20 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="text-2xl font-bold text-emerald-600">AntriKantin</div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleLogout}
+              className="text-gray-700 hover:text-red-600 font-medium text-sm transition-colors"
+            >
+              Keluar
+            </button>
             <div className="hidden sm:block px-4 py-2 rounded-full bg-gray-100 text-sm text-gray-700 font-medium">
               {userName} {userRole && `(${userRole.toLowerCase()})`}
             </div>
-            <button className="text-gray-700 hover:text-gray-900 font-medium text-sm">
-              Keluar
+            <button
+              onClick={() => router.push("/pesanan")}
+              className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors"
+            >
+              Lacak Pesanan
             </button>
           </div>
         </div>
@@ -84,14 +106,33 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {canteens.map((canteen) => (
               <Link key={canteen.id} href={`/kantin/${canteen.id}`}>
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group">
-                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-2xl mb-4 group-hover:scale-105 transition-transform">
-                    {canteen.nama.charAt(0)}
+                <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group flex flex-col">
+                  
+                  {/* Bagian Gambar (Memenuhi Setengah Card / Tinggi 36) */}
+                  <div className="w-full h-36 bg-emerald-100 relative overflow-hidden">
+                    {canteen.gambar_url ? (
+                      <img
+                        src={canteen.gambar_url}
+                        alt={canteen.nama}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-emerald-600">
+                        {canteen.nama.charAt(0)}
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
-                    {canteen.nama}
-                  </h3>
-                  <p className="text-gray-500 text-sm mt-1">{canteen.lokasi}</p>
+
+                  {/* Bagian Teks di Bawah */}
+                  <div className="p-5 flex flex-col justify-between flex-1">
+                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
+                      {canteen.nama}
+                    </h3>
+                    <p className="text-gray-500 text-sm mt-1">
+                      {canteen.lokasi}
+                    </p>
+                  </div>
+
                 </div>
               </Link>
             ))}
