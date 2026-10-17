@@ -2,12 +2,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cream: #ffefc4;      /* latar halaman */
-  --color-brand-50: #eef8ff;   /* tint biru sangat muda (pilihan role terpilih) */
-  --color-brand-100: #cbebff;  /* cincin fokus input */
-  --color-brand-200: #97d7ff;  /* cincin fokus tombol */
-  --color-brand-500: #4d8dba;  /* aksen sekunder */
-  --color-brand-600: #086288;  /* tombol utama, border fokus */
-  --color-brand-700: #06506f;  /* hover tombol, logo, link */
-  --color-brand-800: #053f58;  /* hover link */
+  --color-brand-50: #effcf6;   /* latar halaman (mint muda), opsi terpilih */
+  --color-brand-100: #d3f6e4;
+  --color-brand-200: #a8ebcb;
+  --color-brand-500: #19b47c;  /* aksen sekunder */
+  --color-brand-600: #00a26b;  /* tombol utama, border fokus */
+  --color-brand-700: #008058;  /* hover tombol, logo, link */
+  --color-brand-800: #006846;  /* hover link */
 }
